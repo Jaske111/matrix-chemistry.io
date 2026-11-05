@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Персональная матрица судьбы по дате рождения — символическая интерпретация 22 арканов.">
+  <title>Матрица Судьбы — открой свою карту</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="hero">
+  <nav class="nav"><a class="brand" href="/">☾ МАТРИЦА СУДЬБЫ</a><span>22 энергии · твой путь</span></nav>
+  <div class="hero-content">
+    <div class="eyebrow">✧ ПОЗНАЙ СВОЮ ПРИРОДУ ✧</div>
+    <h1>Матрица <em>Судьбы</em></h1>
+    <p class="lead">Тайны твоего рождения в числах. Исследуй символические энергии, таланты и жизненные темы.</p>
+    <div class="ornament">☽　✧　☾</div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="form-card" id="calculator">
+    <div class="eyebrow">ТВОЯ ИСТОРИЯ НАЧИНАЕТСЯ ЗДЕСЬ</div>
+    <h2>Рассчитай свою матрицу</h2>
+    <p class="muted">Введи данные, чтобы построить персональную карту.</p>
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    <form method="post" action="/">
+      <label for="name">Твоё имя</label>
+      <input id="name" name="name" maxlength="50" placeholder="Например, Анна" required value="{{ request.form.get('name', '') }}">
+      <label for="birthdate">Дата рождения</label>
+      <input id="birthdate" name="birthdate" type="date" required max="{{ today }}">
+      <button class="button" type="submit">✧ Рассчитать матрицу ✧</button>
+    </form>
+    <div class="form-note">Без регистрации · Расчёт прямо на сайте</div>
+  </section>
+
+  {% if result %}
+  <section class="results" id="results">
+    <div class="section-heading">
+      <div class="eyebrow">ТВОЯ ПЕРСОНАЛЬНАЯ КАРТА</div>
+      <h2>Матрица {{ result.name }}</h2>
+      <p class="muted">Дата рождения: {{ result.birthdate }}</p>
+    </div>
+    <div class="matrix-card">
+      <svg class="matrix" viewBox="0 0 340 340" role="img" aria-label="Схема матрицы судьбы">
+        <path class="matrix-lines" d="M170 27 L313 170 L170 313 L27 170 Z M170 27 L170 313 M27 170 L313 170 M69 69 L271 271 M271 69 L69 271"/>
+        <circle cx="170" cy="170" r="65" class="inner-circle"/>
+        {% for p in result.positions %}
+          {% set coords = [(170,27),(271,69),(313,170),(271,271),(170,313),(69,271),(27,170),(69,69),(170,170)][loop.index0] %}
+          <g class="matrix-node" tabindex="0" role="button" data-target="detail-{{ loop.index0 }}">
+            <circle cx="{{ coords[0] }}" cy="{{ coords[1] }}" r="{{ 25 if loop.index == 9 else 19 }}"/>
+            <text x="{{ coords[0] }}" y="{{ coords[1] + 1 }}">{{ p.number }}</text>
+          </g>
+        {% endfor %}
+      </svg>
+      <p class="muted center">Нажми на число, чтобы перейти к его расшифровке.</p>
+    </div>
+
+    <div class="summary-grid">
+      {% for p in result.positions %}
+      <a class="summary-item" href="#detail-{{ loop.index0 }}"><b>{{ p.number }}</b><span>{{ p.label }}</span></a>
+      {% endfor %}
+    </div>
+
+    <section class="center-card">
+      <div class="eyebrow">✧ ЦЕНТР МАТРИЦЫ</div>
+      <div class="center-energy">
+        <strong>{{ result.center.number }}</strong>
+        <div><h3>{{ result.center.title }}</h3><p>{{ result.center.theme }}</p></div>
+      </div>
+      <p>{{ result.center.light }}</p>
+    </section>
+
+    <section class="detail-section">
+      <div class="eyebrow">РАЗБОР ПОЗИЦИЙ</div>
+      <h2>Твоя персональная расшифровка</h2>
+      <div class="details-grid">
+      {% for p in result.positions %}
+        <article class="detail-card" id="detail-{{ loop.index0 }}">
+          <div class="detail-top"><span class="number">{{ p.number }}</span><div><div class="position">{{ p.label }}</div><h3>{{ p.title }}</h3></div></div>
+          <p>{{ p.light }}</p>
+          <div class="shadow"><b>Зона внимания</b><br>{{ p.shadow }}</div>
+        </article>
+      {% endfor %}
+      </div>
+    </section>
+
+    <section class="detail-section">
+      <div class="eyebrow">СПРАВОЧНИК</div>
+      <h2>Все 22 энергии</h2>
+      <div class="details-grid">
+      {% for p in result.all_arcanas %}
+        <article class="detail-card compact">
+          <div class="detail-top"><span class="number">{{ p.number }}</span><div><h3>{{ p.title }}</h3><div class="muted">{{ p.theme }}</div></div></div>
+          <p>{{ p.light }}</p>
+          <div class="shadow"><b>Зона внимания</b><br>{{ p.shadow }}</div>
+        </article>
+      {% endfor %}
+      </div>
+    </section>
+    <p class="disclaimer">Интерпретации носят символический и развлекательный характер. Матрица судьбы не является научным методом диагностики личности или предсказания будущего.</p>
+    <div class="center"><a class="button inline-button" href="/">Рассчитать другую матрицу</a></div>
+  </section>
+  {% endif %}
+</main>
+<footer><div class="brand">☾ МАТРИЦА СУДЬБЫ ☽</div><p>Путь к пониманию себя начинается с одного числа.</p></footer>
+<script>
+document.querySelectorAll('.matrix-node').forEach(node => {
+  const go = () => document.getElementById(node.dataset.target)?.scrollIntoView({behavior:'smooth', block:'center'});
+  node.addEventListener('click', go);
+  node.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }});
+});
+{% if result %}window.addEventListener('load', () => document.getElementById('results')?.scrollIntoView({behavior:'smooth'}));{% endif %}
+</script>
+</body>
+</html>
